@@ -98,7 +98,7 @@ const Dashboard: React.FC = () => {
 
   return (
     <div className="w-full h-full bg-gray-50 dark:bg-gray-900 overflow-y-auto">
-      <div className="container mx-auto px-4 py-6 space-y-6 max-w-full">
+      <div className="container mx-auto space-y-6 max-w-full">
         {/* Header - Responsive text sizes */}
         <div className="text-center space-y-3">
           <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 dark:text-white">

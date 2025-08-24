@@ -119,7 +119,7 @@ const AppContent = () => {
       )}
 
       <main
-        className={`flex-1 overflow-y-auto p-4 transition-all duration-300 ${
+        className={`flex-1 overflow-y-auto transition-all duration-300 ${
           user && window.innerWidth >= 768 ? "ml-64" : "ml-0"
         }`}
       >

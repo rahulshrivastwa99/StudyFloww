@@ -78,7 +78,7 @@
 }
 
 /* Responsive text */
-@media (max-width: ) {
+@media (max-width: 768px) {
   .responsive-text {
     @apply text-sm;
   }
