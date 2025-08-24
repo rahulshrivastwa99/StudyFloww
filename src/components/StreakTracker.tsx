@@ -78,7 +78,7 @@ const StreakTracker: React.FC = () => {
   );
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-10">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-6 sm:p-10">
       <div className="max-w-4xl mx-auto space-y-8">
         {/* Header */}
         <div className="text-center space-y-4">
@@ -182,52 +182,65 @@ const StreakTracker: React.FC = () => {
 
         {/* Calendar View */}
         <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-lg">
-          <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-6">
+          <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
             {new Date().toLocaleDateString("en-US", {
               month: "long",
               year: "numeric",
             })}
           </h3>
 
-          <div className="grid grid-cols-7 gap-2 mb-4">
+          {/* Weekday labels */}
+          <div className="grid grid-cols-7 gap-2 mb-4 text-xs sm:text-sm">
             {weekDays.map((day) => (
               <div
                 key={day}
-                className="text-center text-sm font-semibold text-gray-500 dark:text-gray-400 py-2"
+                className="text-center font-semibold text-gray-500 dark:text-gray-400 py-2"
               >
                 {day}
               </div>
             ))}
           </div>
 
-          <div className="grid grid-cols-7 gap-2">
-            {calendarDays.map((day, index) => (
-              <div key={index} className="aspect-square">
-                {day && (
-                  <div
-                    className={`
-                    w-full h-full flex items-center justify-center rounded-lg text-sm font-medium transition-all duration-200
-                    ${
-                      day.completed
-                        ? "bg-green-500 text-white shadow-md"
-                        : day.isToday
-                        ? "bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 border-2 border-blue-500"
-                        : day.isPast
-                        ? "bg-red-50 dark:bg-red-900/20 text-red-400 dark:text-red-500"
-                        : "bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600"
-                    }
-                  `}
-                  >
-                    {day.day}
-                    {day.completed && day.tasksCompleted > 0 && (
-                      <span className="text-xs ml-1">
-                        •{day.tasksCompleted}
-                      </span>
+          {/* Calendar grid wrapper: allow horizontal scroll on very small screens */}
+          <div className="overflow-x-auto -mx-2 px-2">
+            {/* Make inner grid have a reasonable min width so cells don't become unusably tiny.
+                On larger screens min-w is removed by md: min-w-0 */}
+            <div className="min-w-[560px] md:min-w-0">
+              <div className="grid grid-cols-7 gap-2">
+                {calendarDays.map((day, index) => (
+                  <div key={index} className="w-full">
+                    {day && (
+                      <div
+                        className={`
+                        w-full flex items-center justify-center rounded-lg text-sm font-medium transition-all duration-200
+                        h-10 sm:h-12 md:h-14
+                        ${
+                          day.completed
+                            ? "bg-green-500 text-white shadow-md"
+                            : day.isToday
+                            ? "bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 border-2 border-blue-500"
+                            : day.isPast
+                            ? "bg-red-50 dark:bg-red-900/20 text-red-400 dark:text-red-500"
+                            : "bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600"
+                        }
+                      `}
+                      >
+                        <div className="flex items-center gap-1">
+                          <span>{day.day}</span>
+                          {day.completed && day.tasksCompleted > 0 && (
+                            <span className="text-xs ml-1">
+                              •{day.tasksCompleted}
+                            </span>
+                          )}
+                        </div>
+                      </div>
                     )}
+                    {/* empty cells keep spacing but are low-height so no overflow */}
+                    {!day && <div className="h-10 sm:h-12 md:h-14"></div>}
                   </div>
-                )}
+                ))}
               </div>
-            ))}
+            </div>
           </div>
 
           <div className="flex items-center justify-center gap-6 mt-6 text-sm">
