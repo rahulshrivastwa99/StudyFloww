@@ -72,6 +72,7 @@ const AppContent = () => {
   const { user } = useAuth();
   const location = useLocation();
   const activePanel = location.pathname.split("/")[1] || "dashboard";
+  const isFocusMode = location.pathname === "/focus";
 
   // Initialize isOpen based on screen size
   const [isOpen, setIsOpen] = useState(() => window.innerWidth >= 768);
@@ -113,7 +114,7 @@ const AppContent = () => {
           setActivePanel={setActivePanel}
           isOpen={isOpen}
           setIsOpen={setIsOpen}
-          focusMode={false}
+          focusMode={isFocusMode}
           // isInspecting={isInspecting}
         />
       )}

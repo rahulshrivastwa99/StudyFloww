@@ -40,6 +40,7 @@ const Sidebar: React.FC<SidebarProps> = ({
     { id: "checkin", label: "Check-ins", icon: List },
     { id: "youtube", label: "YouTube", icon: Play },
     { id: "profile", label: "Profile", icon: User },
+    { id: "focus", label: "Focus Mode", icon: Play }, // Added Focus Mode
     { id: "settings", label: "Settings", icon: Settings },
   ];
 

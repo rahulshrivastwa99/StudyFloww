@@ -1,27 +1,32 @@
-import React, { useState } from 'react';
-import { useStudyData } from '../contexts/StudyDataContext';
-import { Plus, Play, ExternalLink, Trash2, Edit3, Search } from 'lucide-react';
+import React, { useState } from "react";
+import { useStudyData } from "../contexts/StudyDataContext";
+import { Plus, Play, ExternalLink, Trash2, Edit3, Search } from "lucide-react";
 
 const YouTubeManager: React.FC = () => {
-  const { youtubePlaylists, addYouTubePlaylist, updateYouTubePlaylist, deleteYouTubePlaylist } = useStudyData();
+  const {
+    youtubePlaylists,
+    addYouTubePlaylist,
+    updateYouTubePlaylist,
+    deleteYouTubePlaylist,
+  } = useStudyData();
   const [showForm, setShowForm] = useState(false);
   const [editingPlaylist, setEditingPlaylist] = useState<string | null>(null);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('all');
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState("all");
   const [formData, setFormData] = useState({
-    title: '',
-    url: '',
-    description: '',
-    category: ''
+    title: "",
+    url: "",
+    description: "",
+    category: "",
   });
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     // Extract playlist ID from YouTube URL
     const playlistId = extractPlaylistId(formData.url);
     if (!playlistId && !isYouTubeUrl(formData.url)) {
-      alert('Please enter a valid YouTube playlist URL');
+      alert("Please enter a valid YouTube playlist URL");
       return;
     }
 
@@ -31,7 +36,7 @@ const YouTubeManager: React.FC = () => {
       addYouTubePlaylist(formData);
     }
 
-    setFormData({ title: '', url: '', description: '', category: '' });
+    setFormData({ title: "", url: "", description: "", category: "" });
     setShowForm(false);
     setEditingPlaylist(null);
   };
@@ -41,7 +46,7 @@ const YouTubeManager: React.FC = () => {
       title: playlist.title,
       url: playlist.url,
       description: playlist.description,
-      category: playlist.category
+      category: playlist.category,
     });
     setEditingPlaylist(playlist.id);
     setShowForm(true);
@@ -53,7 +58,7 @@ const YouTubeManager: React.FC = () => {
   };
 
   const isYouTubeUrl = (url: string) => {
-    return url.includes('youtube.com') || url.includes('youtu.be');
+    return url.includes("youtube.com") || url.includes("youtu.be");
   };
 
   const getEmbedUrl = (url: string) => {
@@ -73,27 +78,33 @@ const YouTubeManager: React.FC = () => {
     return url;
   };
 
-  const categories = Array.from(new Set(youtubePlaylists.map(p => p.category).filter(Boolean)));
+  const categories = Array.from(
+    new Set(youtubePlaylists.map((p) => p.category).filter(Boolean))
+  );
 
   const filteredPlaylists = youtubePlaylists
-    .filter(playlist => 
-      playlist.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      playlist.description.toLowerCase().includes(searchTerm.toLowerCase())
+    .filter(
+      (playlist) =>
+        playlist.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        playlist.description.toLowerCase().includes(searchTerm.toLowerCase())
     )
-    .filter(playlist => selectedCategory === 'all' || playlist.category === selectedCategory);
+    .filter(
+      (playlist) =>
+        selectedCategory === "all" || playlist.category === selectedCategory
+    );
 
   const openFocusedPlaylist = (url: string) => {
     const focusedUrl = getFocusedUrl(url);
-    window.open(focusedUrl, '_blank', 'noopener,noreferrer');
+    window.open(focusedUrl, "_blank", "noopener,noreferrer");
   };
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-6">
       <div className="max-w-6xl mx-auto space-y-8">
         {/* Header */}
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <div className="text-center space-y-3">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-white flex items-center gap-3">
+            <h1 className="text-3xl font-bold text-gray-900 dark:text-white flex items-center justify-center gap-3 mb-2">
               <Play className="w-8 h-8 text-red-600" />
               YouTube Manager
             </h1>
@@ -105,7 +116,12 @@ const YouTubeManager: React.FC = () => {
             onClick={() => {
               setShowForm(true);
               setEditingPlaylist(null);
-              setFormData({ title: '', url: '', description: '', category: '' });
+              setFormData({
+                title: "",
+                url: "",
+                description: "",
+                category: "",
+              });
             }}
             className="px-6 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors flex items-center gap-2"
           >
@@ -133,8 +149,10 @@ const YouTubeManager: React.FC = () => {
               className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 dark:bg-gray-700 dark:text-white"
             >
               <option value="all">All Categories</option>
-              {categories.map(category => (
-                <option key={category} value={category}>{category}</option>
+              {categories.map((category) => (
+                <option key={category} value={category}>
+                  {category}
+                </option>
               ))}
             </select>
           </div>
@@ -145,7 +163,7 @@ const YouTubeManager: React.FC = () => {
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
             <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 w-full max-w-md max-h-96 overflow-y-auto">
               <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
-                {editingPlaylist ? 'Edit Playlist' : 'Add New Playlist'}
+                {editingPlaylist ? "Edit Playlist" : "Add New Playlist"}
               </h3>
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
@@ -156,12 +174,17 @@ const YouTubeManager: React.FC = () => {
                     type="text"
                     required
                     value={formData.title}
-                    onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
+                    onChange={(e) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        title: e.target.value,
+                      }))
+                    }
                     placeholder="Math Fundamentals"
                     className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 dark:bg-gray-700 dark:text-white"
                   />
                 </div>
-                
+
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     YouTube URL *
@@ -170,7 +193,9 @@ const YouTubeManager: React.FC = () => {
                     type="url"
                     required
                     value={formData.url}
-                    onChange={(e) => setFormData(prev => ({ ...prev, url: e.target.value }))}
+                    onChange={(e) =>
+                      setFormData((prev) => ({ ...prev, url: e.target.value }))
+                    }
                     placeholder="https://youtube.com/playlist?list=..."
                     className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 dark:bg-gray-700 dark:text-white"
                   />
@@ -182,7 +207,12 @@ const YouTubeManager: React.FC = () => {
                   </label>
                   <textarea
                     value={formData.description}
-                    onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+                    onChange={(e) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        description: e.target.value,
+                      }))
+                    }
                     rows={3}
                     placeholder="Brief description of the playlist content"
                     className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 dark:bg-gray-700 dark:text-white"
@@ -196,7 +226,12 @@ const YouTubeManager: React.FC = () => {
                   <input
                     type="text"
                     value={formData.category}
-                    onChange={(e) => setFormData(prev => ({ ...prev, category: e.target.value }))}
+                    onChange={(e) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        category: e.target.value,
+                      }))
+                    }
                     placeholder="e.g. Mathematics, Science, Language"
                     className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 dark:bg-gray-700 dark:text-white"
                   />
@@ -207,7 +242,7 @@ const YouTubeManager: React.FC = () => {
                     type="submit"
                     className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
                   >
-                    {editingPlaylist ? 'Update' : 'Add Playlist'}
+                    {editingPlaylist ? "Update" : "Add Playlist"}
                   </button>
                   <button
                     type="button"
@@ -233,12 +268,14 @@ const YouTubeManager: React.FC = () => {
               No playlists found
             </h3>
             <p className="text-gray-400 dark:text-gray-500">
-              {searchTerm ? 'Try adjusting your search' : 'Add your first study playlist to get started'}
+              {searchTerm
+                ? "Try adjusting your search"
+                : "Add your first study playlist to get started"}
             </p>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredPlaylists.map(playlist => (
+            {filteredPlaylists.map((playlist) => (
               <div
                 key={playlist.id}
                 className="bg-white dark:bg-gray-800 rounded-lg shadow-lg hover:shadow-xl transition-all duration-200 overflow-hidden"
@@ -324,8 +361,9 @@ const YouTubeManager: React.FC = () => {
             🎯 Distraction-Free Viewing
           </h3>
           <p className="text-blue-700 dark:text-blue-300 text-sm">
-            Playlists open in a focused mode with minimal YouTube distractions. For even better focus, 
-            consider using browser extensions that block comments, recommendations, and other distracting elements.
+            Playlists open in a focused mode with minimal YouTube distractions.
+            For even better focus, consider using browser extensions that block
+            comments, recommendations, and other distracting elements.
           </p>
         </div>
       </div>

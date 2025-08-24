@@ -94,7 +94,7 @@ const NotesPanel: React.FC = () => {
                   <FileText className="w-10 h-10 text-blue-600 " />
                   Study Notes
                 </h1>
-                <p className="text-gray-600 dark:text-gray-400 text-center">
+                <p className="text-gray-600 dark:text-gray-400 text-center gap-2 mb-4">
                   Organize and manage your study notes
                 </p>
               </div>

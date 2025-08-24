@@ -1,29 +1,38 @@
-import React, { useState } from 'react';
-import { useStudyData } from '../contexts/StudyDataContext';
-import { Plus, Target, CheckCircle2, Circle, Calendar, Edit3, Trash2 } from 'lucide-react';
+import React, { useState } from "react";
+import { useStudyData } from "../contexts/StudyDataContext";
+import {
+  Plus,
+  Target,
+  CheckCircle2,
+  Circle,
+  Calendar,
+  Edit3,
+  Trash2,
+} from "lucide-react";
 
 const Roadmap: React.FC = () => {
-  const { roadmapItems, addRoadmapItem, updateRoadmapItem, deleteRoadmapItem } = useStudyData();
+  const { roadmapItems, addRoadmapItem, updateRoadmapItem, deleteRoadmapItem } =
+    useStudyData();
   const [showForm, setShowForm] = useState(false);
   const [editingItem, setEditingItem] = useState<string | null>(null);
   const [formData, setFormData] = useState({
-    title: '',
-    description: '',
-    dueDate: '',
-    milestones: [{ id: '1', title: '', completed: false }]
+    title: "",
+    description: "",
+    dueDate: "",
+    milestones: [{ id: "1", title: "", completed: false }],
   });
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const milestones = formData.milestones.filter(m => m.title.trim());
-    
+    const milestones = formData.milestones.filter((m) => m.title.trim());
+
     if (editingItem) {
       updateRoadmapItem(editingItem, {
         ...formData,
         milestones: milestones.map((m, index) => ({
           ...m,
-          id: m.id || Date.now().toString() + index
-        }))
+          id: m.id || Date.now().toString() + index,
+        })),
       });
     } else {
       addRoadmapItem({
@@ -31,16 +40,16 @@ const Roadmap: React.FC = () => {
         completed: false,
         milestones: milestones.map((m, index) => ({
           ...m,
-          id: Date.now().toString() + index
-        }))
+          id: Date.now().toString() + index,
+        })),
       });
     }
-    
+
     setFormData({
-      title: '',
-      description: '',
-      dueDate: '',
-      milestones: [{ id: '1', title: '', completed: false }]
+      title: "",
+      description: "",
+      dueDate: "",
+      milestones: [{ id: "1", title: "", completed: false }],
     });
     setShowForm(false);
     setEditingItem(null);
@@ -51,57 +60,60 @@ const Roadmap: React.FC = () => {
       title: item.title,
       description: item.description,
       dueDate: item.dueDate,
-      milestones: item.milestones.length > 0 ? item.milestones : [{ id: '1', title: '', completed: false }]
+      milestones:
+        item.milestones.length > 0
+          ? item.milestones
+          : [{ id: "1", title: "", completed: false }],
     });
     setEditingItem(item.id);
     setShowForm(true);
   };
 
   const addMilestone = () => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
       milestones: [
         ...prev.milestones,
-        { id: Date.now().toString(), title: '', completed: false }
-      ]
+        { id: Date.now().toString(), title: "", completed: false },
+      ],
     }));
   };
 
   const removeMilestone = (index: number) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      milestones: prev.milestones.filter((_, i) => i !== index)
+      milestones: prev.milestones.filter((_, i) => i !== index),
     }));
   };
 
   const updateMilestone = (index: number, title: string) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      milestones: prev.milestones.map((m, i) => 
+      milestones: prev.milestones.map((m, i) =>
         i === index ? { ...m, title } : m
-      )
+      ),
     }));
   };
 
   const toggleMilestone = (itemId: string, milestoneId: string) => {
-    const item = roadmapItems.find(item => item.id === itemId);
+    const item = roadmapItems.find((item) => item.id === itemId);
     if (!item) return;
 
-    const updatedMilestones = item.milestones.map(m => 
+    const updatedMilestones = item.milestones.map((m) =>
       m.id === milestoneId ? { ...m, completed: !m.completed } : m
     );
 
-    const allCompleted = updatedMilestones.every(m => m.completed);
-    
+    const allCompleted = updatedMilestones.every((m) => m.completed);
+
     updateRoadmapItem(itemId, {
       milestones: updatedMilestones,
-      completed: allCompleted
+      completed: allCompleted,
     });
   };
 
   const getProgressPercentage = (milestones: any[]) => {
     if (milestones.length === 0) return 0;
-    const completed = milestones.filter(m => m.completed).length;
+    const completed = milestones.filter((m) => m.completed).length;
     return Math.round((completed / milestones.length) * 100);
   };
 
@@ -109,9 +121,9 @@ const Roadmap: React.FC = () => {
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-6">
       <div className="max-w-4xl mx-auto space-y-8">
         {/* Header */}
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <div className="text-center space-y-3">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-white flex items-center gap-3">
+            <h1 className="text-3xl font-bold text-gray-900 dark:text-white flex items-center justify-center gap-3 mb-2">
               <Target className="w-8 h-8 text-purple-600" />
               Study Roadmap
             </h1>
@@ -124,10 +136,10 @@ const Roadmap: React.FC = () => {
               setShowForm(true);
               setEditingItem(null);
               setFormData({
-                title: '',
-                description: '',
-                dueDate: '',
-                milestones: [{ id: '1', title: '', completed: false }]
+                title: "",
+                description: "",
+                dueDate: "",
+                milestones: [{ id: "1", title: "", completed: false }],
               });
             }}
             className="px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors flex items-center gap-2"
@@ -142,7 +154,7 @@ const Roadmap: React.FC = () => {
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
             <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 w-full max-w-2xl max-h-96 overflow-y-auto">
               <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
-                {editingItem ? 'Edit Goal' : 'Add New Goal'}
+                {editingItem ? "Edit Goal" : "Add New Goal"}
               </h3>
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
@@ -153,18 +165,28 @@ const Roadmap: React.FC = () => {
                     type="text"
                     required
                     value={formData.title}
-                    onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
+                    onChange={(e) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        title: e.target.value,
+                      }))
+                    }
                     className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 dark:bg-gray-700 dark:text-white"
                   />
                 </div>
-                
+
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     Description
                   </label>
                   <textarea
                     value={formData.description}
-                    onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+                    onChange={(e) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        description: e.target.value,
+                      }))
+                    }
                     rows={3}
                     className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 dark:bg-gray-700 dark:text-white"
                   />
@@ -177,7 +199,12 @@ const Roadmap: React.FC = () => {
                   <input
                     type="date"
                     value={formData.dueDate}
-                    onChange={(e) => setFormData(prev => ({ ...prev, dueDate: e.target.value }))}
+                    onChange={(e) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        dueDate: e.target.value,
+                      }))
+                    }
                     className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 dark:bg-gray-700 dark:text-white"
                   />
                 </div>
@@ -198,12 +225,17 @@ const Roadmap: React.FC = () => {
                   </div>
                   <div className="space-y-2 max-h-40 overflow-y-auto">
                     {formData.milestones.map((milestone, index) => (
-                      <div key={milestone.id} className="flex items-center gap-2">
+                      <div
+                        key={milestone.id}
+                        className="flex items-center gap-2"
+                      >
                         <input
                           type="text"
                           placeholder="Milestone title"
                           value={milestone.title}
-                          onChange={(e) => updateMilestone(index, e.target.value)}
+                          onChange={(e) =>
+                            updateMilestone(index, e.target.value)
+                          }
                           className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 dark:bg-gray-700 dark:text-white"
                         />
                         {formData.milestones.length > 1 && (
@@ -225,7 +257,7 @@ const Roadmap: React.FC = () => {
                     type="submit"
                     className="flex-1 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
                   >
-                    {editingItem ? 'Update Goal' : 'Add Goal'}
+                    {editingItem ? "Update Goal" : "Add Goal"}
                   </button>
                   <button
                     type="button"
@@ -259,17 +291,22 @@ const Roadmap: React.FC = () => {
             <div className="relative">
               {/* Timeline Line */}
               <div className="absolute left-8 top-0 bottom-0 w-0.5 bg-gray-300 dark:bg-gray-600"></div>
-              
+
               {roadmapItems.map((item, index) => (
-                <div key={item.id} className="relative flex items-start gap-6 pb-8">
+                <div
+                  key={item.id}
+                  className="relative flex items-start gap-6 pb-8"
+                >
                   {/* Timeline Dot */}
-                  <div className={`relative z-10 w-16 h-16 rounded-full flex items-center justify-center ${
-                    item.completed 
-                      ? 'bg-green-500' 
-                      : getProgressPercentage(item.milestones) > 0
-                        ? 'bg-purple-500'
-                        : 'bg-gray-400'
-                  }`}>
+                  <div
+                    className={`relative z-10 w-16 h-16 rounded-full flex items-center justify-center ${
+                      item.completed
+                        ? "bg-green-500"
+                        : getProgressPercentage(item.milestones) > 0
+                        ? "bg-purple-500"
+                        : "bg-gray-400"
+                    }`}
+                  >
                     {item.completed ? (
                       <CheckCircle2 className="w-8 h-8 text-white" />
                     ) : (
@@ -281,11 +318,13 @@ const Roadmap: React.FC = () => {
                   <div className="flex-1 bg-white dark:bg-gray-800 rounded-lg p-6 shadow-lg">
                     <div className="flex items-start justify-between mb-4">
                       <div>
-                        <h3 className={`text-xl font-semibold mb-2 ${
-                          item.completed 
-                            ? 'line-through text-gray-500 dark:text-gray-400' 
-                            : 'text-gray-900 dark:text-white'
-                        }`}>
+                        <h3
+                          className={`text-xl font-semibold mb-2 ${
+                            item.completed
+                              ? "line-through text-gray-500 dark:text-gray-400"
+                              : "text-gray-900 dark:text-white"
+                          }`}
+                        >
                           {item.title}
                         </h3>
                         {item.description && (
@@ -296,7 +335,10 @@ const Roadmap: React.FC = () => {
                         {item.dueDate && (
                           <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
                             <Calendar className="w-4 h-4" />
-                            <span>Target: {new Date(item.dueDate).toLocaleDateString()}</span>
+                            <span>
+                              Target:{" "}
+                              {new Date(item.dueDate).toLocaleDateString()}
+                            </span>
                           </div>
                         )}
                       </div>
@@ -328,9 +370,13 @@ const Roadmap: React.FC = () => {
                           </span>
                         </div>
                         <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
-                          <div 
+                          <div
                             className="bg-purple-500 h-2 rounded-full transition-all duration-500"
-                            style={{ width: `${getProgressPercentage(item.milestones)}%` }}
+                            style={{
+                              width: `${getProgressPercentage(
+                                item.milestones
+                              )}%`,
+                            }}
                           ></div>
                         </div>
                       </div>
@@ -343,9 +389,14 @@ const Roadmap: React.FC = () => {
                           Milestones
                         </h4>
                         {item.milestones.map((milestone) => (
-                          <div key={milestone.id} className="flex items-center gap-3">
+                          <div
+                            key={milestone.id}
+                            className="flex items-center gap-3"
+                          >
                             <button
-                              onClick={() => toggleMilestone(item.id, milestone.id)}
+                              onClick={() =>
+                                toggleMilestone(item.id, milestone.id)
+                              }
                               className="flex-shrink-0"
                             >
                               {milestone.completed ? (
@@ -354,11 +405,13 @@ const Roadmap: React.FC = () => {
                                 <Circle className="w-5 h-5 text-gray-400 hover:text-purple-600 transition-colors" />
                               )}
                             </button>
-                            <span className={`text-sm ${
-                              milestone.completed 
-                                ? 'line-through text-gray-500 dark:text-gray-400' 
-                                : 'text-gray-700 dark:text-gray-300'
-                            }`}>
+                            <span
+                              className={`text-sm ${
+                                milestone.completed
+                                  ? "line-through text-gray-500 dark:text-gray-400"
+                                  : "text-gray-700 dark:text-gray-300"
+                              }`}
+                            >
                               {milestone.title}
                             </span>
                           </div>
