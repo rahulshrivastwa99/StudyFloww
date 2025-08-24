@@ -21,7 +21,7 @@ import TodoList from "./components/TodoList";
 import StreakTracker from "./components/StreakTracker";
 import FocusMode from "./components/FocusMode";
 import Roadmap from "./components/Roadmap";
-import Settings from "./components/Settings";
+import SettingsPage from "./components/Settings";
 import UserProfile from "./components/UserProfile";
 import YouTubeManager from "./components/YouTubeManager";
 import CheckInList from "./components/CheckInList";
@@ -33,11 +33,6 @@ import Sidebar from "./components/Sidebar";
 const FocusModeWrapper: React.FC = () => {
   const navigate = useNavigate();
   return <FocusMode onExit={() => navigate("/")} />;
-};
-
-const SettingsWrapper: React.FC = () => {
-  const [theme, setTheme] = useState<"light" | "dark">("light");
-  return <Settings theme={theme} setTheme={setTheme} />;
 };
 
 const AuthFormWrapper: React.FC = () => {
@@ -182,7 +177,7 @@ const AppContent = () => {
             path="/settings"
             element={
               <PrivateRoute>
-                <SettingsWrapper />
+                <SettingsPage />
               </PrivateRoute>
             }
           />
@@ -223,9 +218,11 @@ const App = () => {
   return (
     <AuthProvider>
       <StudyDataProvider>
-        <Router>
-          <AppContent />
-        </Router>
+        <ThemeProvider>
+          <Router>
+            <AppContent />
+          </Router>
+        </ThemeProvider>
       </StudyDataProvider>
     </AuthProvider>
   );
