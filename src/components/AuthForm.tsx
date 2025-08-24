@@ -1,22 +1,22 @@
-import React, { useState } from 'react';
-import { useAuth } from '../contexts/AuthContext';
-import { Eye, EyeOff, Mail, Lock, User, BookOpen } from 'lucide-react';
+import React, { useState } from "react";
+import { useAuth } from "../contexts/AuthContext";
+import { Eye, EyeOff, Mail, Lock, User, BookOpen } from "lucide-react";
 
 interface AuthFormProps {
-  mode: 'login' | 'signup';
+  mode: "login" | "signup";
   onToggleMode: () => void;
 }
 
 const AuthForm: React.FC<AuthFormProps> = ({ mode, onToggleMode }) => {
   const { signIn, signUp, resetPassword } = useAuth();
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-  const [message, setMessage] = useState('');
+  const [error, setError] = useState("");
+  const [message, setMessage] = useState("");
   const [showForgotPassword, setShowForgotPassword] = useState(false);
 
   const validateEmail = (email: string) => {
@@ -30,31 +30,31 @@ const AuthForm: React.FC<AuthFormProps> = ({ mode, onToggleMode }) => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
-    setMessage('');
+    setError("");
+    setMessage("");
     setLoading(true);
 
     // Validation
     if (!validateEmail(email)) {
-      setError('Please enter a valid email address');
+      setError("Please enter a valid email address");
       setLoading(false);
       return;
     }
 
     if (!validatePassword(password)) {
-      setError('Password must be at least 6 characters long');
+      setError("Password must be at least 6 characters long");
       setLoading(false);
       return;
     }
 
-    if (mode === 'signup' && password !== confirmPassword) {
-      setError('Passwords do not match');
+    if (mode === "signup" && password !== confirmPassword) {
+      setError("Passwords do not match");
       setLoading(false);
       return;
     }
 
     try {
-      if (mode === 'login') {
+      if (mode === "login") {
         const { error } = await signIn(email, password);
         if (error) {
           setError(error.message);
@@ -64,11 +64,13 @@ const AuthForm: React.FC<AuthFormProps> = ({ mode, onToggleMode }) => {
         if (error) {
           setError(error.message);
         } else {
-          setMessage('Account created successfully! Please check your email to verify your account.');
+          setMessage(
+            "Account created successfully! Please check your email to verify your account."
+          );
         }
       }
     } catch (err) {
-      setError('An unexpected error occurred. Please try again.');
+      setError("An unexpected error occurred. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -76,12 +78,12 @@ const AuthForm: React.FC<AuthFormProps> = ({ mode, onToggleMode }) => {
 
   const handleForgotPassword = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
-    setMessage('');
+    setError("");
+    setMessage("");
     setLoading(true);
 
     if (!validateEmail(email)) {
-      setError('Please enter a valid email address');
+      setError("Please enter a valid email address");
       setLoading(false);
       return;
     }
@@ -91,11 +93,11 @@ const AuthForm: React.FC<AuthFormProps> = ({ mode, onToggleMode }) => {
       if (error) {
         setError(error.message);
       } else {
-        setMessage('Password reset email sent! Check your inbox.');
+        setMessage("Password reset email sent! Check your inbox.");
         setShowForgotPassword(false);
       }
     } catch (err) {
-      setError('An unexpected error occurred. Please try again.');
+      setError("An unexpected error occurred. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -109,7 +111,9 @@ const AuthForm: React.FC<AuthFormProps> = ({ mode, onToggleMode }) => {
             <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
               <BookOpen className="w-8 h-8 text-white" />
             </div>
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Reset Password</h1>
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+              Reset Password
+            </h1>
             <p className="text-gray-600 dark:text-gray-400 mt-2">
               Enter your email to receive a password reset link
             </p>
@@ -118,13 +122,17 @@ const AuthForm: React.FC<AuthFormProps> = ({ mode, onToggleMode }) => {
           <form onSubmit={handleForgotPassword} className="space-y-6">
             {error && (
               <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
-                <p className="text-red-600 dark:text-red-400 text-sm">{error}</p>
+                <p className="text-red-600 dark:text-red-400 text-sm">
+                  {error}
+                </p>
               </div>
             )}
 
             {message && (
               <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4">
-                <p className="text-green-600 dark:text-green-400 text-sm">{message}</p>
+                <p className="text-green-600 dark:text-green-400 text-sm">
+                  {message}
+                </p>
               </div>
             )}
 
@@ -145,7 +153,7 @@ const AuthForm: React.FC<AuthFormProps> = ({ mode, onToggleMode }) => {
               disabled={loading}
               className="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
             >
-              {loading ? 'Sending...' : 'Send Reset Link'}
+              {loading ? "Sending..." : "Send Reset Link"}
             </button>
 
             <button
@@ -169,13 +177,12 @@ const AuthForm: React.FC<AuthFormProps> = ({ mode, onToggleMode }) => {
             <BookOpen className="w-8 h-8 text-white" />
           </div>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-            {mode === 'login' ? 'Welcome Back' : 'Create Account'}
+            {mode === "login" ? "Welcome Back" : "Create Account"}
           </h1>
           <p className="text-gray-600 dark:text-gray-400 mt-2">
-            {mode === 'login' 
-              ? 'Sign in to continue your study journey' 
-              : 'Join StudyFlow and start building better study habits'
-            }
+            {mode === "login"
+              ? "Sign in to continue your study journey"
+              : "Join StudyFlow and start building better study habits"}
           </p>
         </div>
 
@@ -188,7 +195,9 @@ const AuthForm: React.FC<AuthFormProps> = ({ mode, onToggleMode }) => {
 
           {message && (
             <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4">
-              <p className="text-green-600 dark:text-green-400 text-sm">{message}</p>
+              <p className="text-green-600 dark:text-green-400 text-sm">
+                {message}
+              </p>
             </div>
           )}
 
@@ -207,7 +216,7 @@ const AuthForm: React.FC<AuthFormProps> = ({ mode, onToggleMode }) => {
           <div className="relative">
             <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
             <input
-              type={showPassword ? 'text' : 'password'}
+              type={showPassword ? "text" : "password"}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="Password"
@@ -219,15 +228,19 @@ const AuthForm: React.FC<AuthFormProps> = ({ mode, onToggleMode }) => {
               onClick={() => setShowPassword(!showPassword)}
               className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
             >
-              {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+              {showPassword ? (
+                <EyeOff className="w-5 h-5" />
+              ) : (
+                <Eye className="w-5 h-5" />
+              )}
             </button>
           </div>
 
-          {mode === 'signup' && (
+          {mode === "signup" && (
             <div className="relative">
               <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
               <input
-                type={showConfirmPassword ? 'text' : 'password'}
+                type={showConfirmPassword ? "text" : "password"}
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 placeholder="Confirm password"
@@ -239,7 +252,11 @@ const AuthForm: React.FC<AuthFormProps> = ({ mode, onToggleMode }) => {
                 onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                 className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
               >
-                {showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                {showConfirmPassword ? (
+                  <EyeOff className="w-5 h-5" />
+                ) : (
+                  <Eye className="w-5 h-5" />
+                )}
               </button>
             </div>
           )}
@@ -249,13 +266,16 @@ const AuthForm: React.FC<AuthFormProps> = ({ mode, onToggleMode }) => {
             disabled={loading}
             className="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
           >
-            {loading 
-              ? (mode === 'login' ? 'Signing In...' : 'Creating Account...') 
-              : (mode === 'login' ? 'Sign In' : 'Create Account')
-            }
+            {loading
+              ? mode === "login"
+                ? "Signing In..."
+                : "Creating Account..."
+              : mode === "login"
+              ? "Sign In"
+              : "Create Account"}
           </button>
 
-          {mode === 'login' && (
+          {mode === "login" && (
             <button
               type="button"
               onClick={() => setShowForgotPassword(true)}
@@ -268,20 +288,22 @@ const AuthForm: React.FC<AuthFormProps> = ({ mode, onToggleMode }) => {
 
         <div className="mt-8 text-center">
           <p className="text-gray-600 dark:text-gray-400">
-            {mode === 'login' ? "Don't have an account?" : 'Already have an account?'}
+            {mode === "login"
+              ? "Don't have an account?"
+              : "Already have an account?"}
             <button
               onClick={onToggleMode}
               className="ml-2 text-blue-600 hover:text-blue-700 font-medium transition-colors"
             >
-              {mode === 'login' ? 'Sign Up' : 'Sign In'}
+              {mode === "login" ? "Sign Up" : "Sign In"}
             </button>
           </p>
         </div>
 
-        {mode === 'signup' && (
+        {mode === "signup" && (
           <div className="mt-6 text-xs text-gray-500 dark:text-gray-400 text-center">
-            By creating an account, you agree to our Terms of Service and Privacy Policy.
-            Your data is encrypted and stored securely.
+            By creating an account, you agree to our Terms of Service and
+            Privacy Policy. Your data is encrypted and stored securely.
           </div>
         )}
       </div>
