@@ -9,6 +9,9 @@ const StreakTracker: React.FC = () => {
   );
   const [tasksCompleted, setTasksCompleted] = useState(1);
 
+  // new: allow week start to be Sunday (0) or Monday (1)
+  const [startOfWeek, setStartOfWeek] = useState<0 | 1>(0);
+
   const handleAddEntry = () => {
     addStreakEntry(selectedDate, tasksCompleted);
     setTasksCompleted(1);
@@ -21,9 +24,19 @@ const StreakTracker: React.FC = () => {
     const firstDay = new Date(currentYear, currentMonth, 1);
     const lastDay = new Date(currentYear, currentMonth + 1, 0);
     const daysInMonth = lastDay.getDate();
-    const startDay = firstDay.getDay();
 
-    const days = [];
+    // shift start day according to startOfWeek (0 = Sunday, 1 = Monday)
+    const rawStartDay = firstDay.getDay(); // 0 (Sun) .. 6 (Sat)
+    const startDay = (rawStartDay - startOfWeek + 7) % 7;
+
+    const days: Array<null | {
+      day: number;
+      date: string;
+      completed: boolean;
+      tasksCompleted: number;
+      isToday: boolean;
+      isPast: boolean;
+    }> = [];
 
     // Empty cells for days before month starts
     for (let i = 0; i < startDay; i++) {
@@ -50,7 +63,20 @@ const StreakTracker: React.FC = () => {
   };
 
   const calendarDays = generateCalendarData();
-  const weekDays = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+
+  // full weekday names, rotated by startOfWeek so labels align with grid
+  const baseWeekDays = [
+    "Sunday",
+    "Monday",
+    "Tuesday",
+    "Wednesday",
+    "Thursday",
+    "Friday",
+    "Saturday",
+  ];
+  const weekDays = baseWeekDays
+    .slice(startOfWeek)
+    .concat(baseWeekDays.slice(0, startOfWeek));
 
   const longestStreak = React.useMemo(() => {
     const sorted = [...streakData].sort(
@@ -182,12 +208,41 @@ const StreakTracker: React.FC = () => {
 
         {/* Calendar View */}
         <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-lg">
-          <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
-            {new Date().toLocaleDateString("en-US", {
-              month: "long",
-              year: "numeric",
-            })}
-          </h3>
+          <div className="flex items-start justify-between mb-4 gap-4">
+            <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
+              {new Date().toLocaleDateString("en-US", {
+                month: "long",
+                year: "numeric",
+              })}
+            </h3>
+
+            {/* Toggle for start of week */}
+            <div className="ml-auto flex items-center gap-2">
+              <span className="text-sm text-gray-600 dark:text-gray-300">
+                Week starts:
+              </span>
+              <button
+                onClick={() => setStartOfWeek(0)}
+                className={`px-3 py-1 rounded ${
+                  startOfWeek === 0
+                    ? "bg-blue-600 text-white"
+                    : "bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300"
+                } text-sm`}
+              >
+                Sun
+              </button>
+              <button
+                onClick={() => setStartOfWeek(1)}
+                className={`px-3 py-1 rounded ${
+                  startOfWeek === 1
+                    ? "bg-blue-600 text-white"
+                    : "bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300"
+                } text-sm`}
+              >
+                Mon
+              </button>
+            </div>
+          </div>
 
           {/* Weekday labels */}
           <div className="grid grid-cols-7 gap-2 mb-4 text-xs sm:text-sm">
@@ -203,8 +258,6 @@ const StreakTracker: React.FC = () => {
 
           {/* Calendar grid wrapper: allow horizontal scroll on very small screens */}
           <div className="overflow-x-auto -mx-2 px-2">
-            {/* Make inner grid have a reasonable min width so cells don't become unusably tiny.
-                On larger screens min-w is removed by md: min-w-0 */}
             <div className="min-w-[560px] md:min-w-0">
               <div className="grid grid-cols-7 gap-2">
                 {calendarDays.map((day, index) => (
@@ -235,7 +288,6 @@ const StreakTracker: React.FC = () => {
                         </div>
                       </div>
                     )}
-                    {/* empty cells keep spacing but are low-height so no overflow */}
                     {!day && <div className="h-10 sm:h-12 md:h-14"></div>}
                   </div>
                 ))}
