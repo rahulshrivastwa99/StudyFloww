@@ -1,21 +1,8 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { X, Clock, Play, Pause, RotateCcw } from "lucide-react";
 
 interface FocusModeProps {
   onExit: () => void;
-}
-
-// Type for AudioContext to handle browser compatibility
-type AudioContextType = {
-  new (contextOptions?: AudioContextOptions): AudioContext;
-  prototype: AudioContext;
-};
-
-declare global {
-  interface Window {
-    AudioContext: AudioContextType;
-    webkitAudioContext: AudioContextType;
-  }
 }
 
 const FocusMode: React.FC<FocusModeProps> = ({ onExit }) => {
@@ -32,6 +19,7 @@ const FocusMode: React.FC<FocusModeProps> = ({ onExit }) => {
   const longBreak = 15 * 60; // 15 minutes
 
   const audioContextRef = useRef<AudioContext | null>(null);
+  const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
   // Check if device is mobile
   useEffect(() => {
@@ -50,39 +38,7 @@ const FocusMode: React.FC<FocusModeProps> = ({ onExit }) => {
     }
   }, []);
 
-  // Debug logging to check if timer is working
-  useEffect(() => {
-    console.log("Timer state:", {
-      isRunning,
-      timeRemaining,
-      sessionType,
-      isMobile,
-    });
-  }, [isRunning, timeRemaining, sessionType, isMobile]);
-
-  useEffect(() => {
-    let interval: NodeJS.Timeout | null = null;
-
-    if (isRunning && timeRemaining > 0) {
-      interval = setInterval(() => {
-        setTimeRemaining((time) => {
-          if (time <= 1) {
-            handleSessionComplete();
-            return 0;
-          }
-          return time - 1;
-        });
-      }, 1000);
-    } else if (!isRunning && interval) {
-      clearInterval(interval);
-    }
-
-    return () => {
-      if (interval) clearInterval(interval);
-    };
-  }, [isRunning, timeRemaining]);
-
-  const playAlarmSound = () => {
+  const playAlarmSound = useCallback(() => {
     try {
       // Clean up previous audio context if it exists
       if (audioContextRef.current) {
@@ -98,6 +54,11 @@ const FocusMode: React.FC<FocusModeProps> = ({ onExit }) => {
       }
 
       audioContextRef.current = new AudioContextClass();
+
+      // Resume audio context if suspended (required on some browsers)
+      if (audioContextRef.current.state === "suspended") {
+        audioContextRef.current.resume();
+      }
 
       // Create a more pleasant alarm sound (multiple tones)
       const playTone = (
@@ -141,20 +102,17 @@ const FocusMode: React.FC<FocusModeProps> = ({ onExit }) => {
       console.error("Could not play alarm sound:", error);
       setAudioError(true);
 
-      // Fallback: try to use system beep
-      try {
-        // Create a simple beep sound
-        const audio = new Audio(
-          "data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmUeBzCH0/LNdiMFl1nAI/k7AjSBzfLZijYIF2m98OHqSDGGyfDzlTIIm1/ExO3jQkGJzO/GhzEICm6+7+OqVhYOYKzd7eKyVhEMbafs6qJUDg1fqt5qfXoHUKfg8PafUQwOPq0urkjA"
-        );
-        audio.play().catch(console.error);
-      } catch (e) {
-        console.error("Fallback audio also failed:", e);
-      }
-    }
-  };
+      // Fallback: show visual alert if audio fails
+      document.title = sessionType === "focus" ? "Break Time!" : "Focus Time!";
 
-  const handleSessionComplete = () => {
+      // Reset title after 3 seconds
+      setTimeout(() => {
+        document.title = "StudyFlow - Focus Mode";
+      }, 3000);
+    }
+  }, [sessionType]);
+
+  const handleSessionComplete = useCallback(() => {
     console.log("Session complete - starting transition", {
       sessionType,
       sessionCount,
@@ -163,10 +121,16 @@ const FocusMode: React.FC<FocusModeProps> = ({ onExit }) => {
     // First stop the timer
     setIsRunning(false);
 
+    // Clear any existing interval
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+      intervalRef.current = null;
+    }
+
     // Play alarm sound
     playAlarmSound();
 
-    // Show notification (with mobile-specific handling)
+    // Show notification (with error handling)
     if ("Notification" in window && Notification.permission === "granted") {
       try {
         new Notification(
@@ -177,6 +141,7 @@ const FocusMode: React.FC<FocusModeProps> = ({ onExit }) => {
                 ? "Great work! Time for a break."
                 : "Break is over. Ready to focus?",
             icon: "/favicon.ico",
+            tag: "pomodoro-timer", // Prevent multiple notifications
           }
         );
       } catch (error) {
@@ -184,27 +149,65 @@ const FocusMode: React.FC<FocusModeProps> = ({ onExit }) => {
       }
     }
 
-    // Use setTimeout to ensure state updates happen in the correct order
-    // and to prevent potential race conditions
-    setTimeout(() => {
-      if (sessionType === "focus") {
-        const newCount = sessionCount + 1;
-        setSessionCount(newCount);
+    // Transition to next session
+    if (sessionType === "focus") {
+      const newCount = sessionCount + 1;
+      setSessionCount(newCount);
 
-        // After 4 focus sessions, take a long break
-        if (newCount % 4 === 0) {
-          setSessionType("break");
-          setTimeRemaining(longBreak);
-        } else {
-          setSessionType("break");
-          setTimeRemaining(shortBreak);
-        }
+      // After 4 focus sessions, take a long break
+      if (newCount % 4 === 0) {
+        setSessionType("break");
+        setTimeRemaining(longBreak);
       } else {
-        setSessionType("focus");
-        setTimeRemaining(customTime * 60);
+        setSessionType("break");
+        setTimeRemaining(shortBreak);
       }
-    }, 100); // Small delay to ensure proper state transitions
-  };
+    } else {
+      setSessionType("focus");
+      setTimeRemaining(customTime * 60);
+    }
+  }, [
+    sessionType,
+    sessionCount,
+    longBreak,
+    shortBreak,
+    customTime,
+    playAlarmSound,
+  ]);
+
+  // Timer effect with proper cleanup
+  useEffect(() => {
+    if (isRunning && timeRemaining > 0) {
+      intervalRef.current = setInterval(() => {
+        setTimeRemaining((time) => {
+          if (time <= 1) {
+            // Don't call handleSessionComplete here to avoid closure issues
+            return 0;
+          }
+          return time - 1;
+        });
+      }, 1000);
+    } else {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
+    }
+
+    return () => {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
+    };
+  }, [isRunning, timeRemaining]);
+
+  // Separate effect to handle session completion
+  useEffect(() => {
+    if (isRunning && timeRemaining === 0) {
+      handleSessionComplete();
+    }
+  }, [timeRemaining, isRunning, handleSessionComplete]);
 
   const toggleTimer = () => {
     console.log("Toggle timer clicked. Current state:", isRunning);
@@ -214,6 +217,13 @@ const FocusMode: React.FC<FocusModeProps> = ({ onExit }) => {
   const resetTimer = () => {
     console.log("Reset timer clicked");
     setIsRunning(false);
+
+    // Clear interval
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+      intervalRef.current = null;
+    }
+
     if (sessionType === "focus") {
       setTimeRemaining(customTime * 60);
     } else {
@@ -236,7 +246,7 @@ const FocusMode: React.FC<FocusModeProps> = ({ onExit }) => {
         : sessionCount % 4 === 0
         ? longBreak
         : shortBreak;
-    return ((totalTime - timeRemaining) / totalTime) * 100;
+    return totalTime > 0 ? ((totalTime - timeRemaining) / totalTime) * 100 : 0;
   };
 
   const handleCustomTimeChange = (minutes: number) => {
@@ -265,9 +275,12 @@ const FocusMode: React.FC<FocusModeProps> = ({ onExit }) => {
     }
   };
 
-  // Clean up audio context on component unmount
+  // Clean up on component unmount
   useEffect(() => {
     return () => {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+      }
       if (audioContextRef.current) {
         audioContextRef.current.close().catch(console.error);
       }
@@ -275,187 +288,205 @@ const FocusMode: React.FC<FocusModeProps> = ({ onExit }) => {
   }, []);
 
   return (
-    <div className="fixed inset-0 bg-gray-900 z-50 flex items-center justify-center overflow-y-auto p-4">
+    <div className="fixed inset-0 bg-gray-900 z-50 flex items-center justify-center overflow-y-auto">
       {/* Background Pattern */}
       <div className="absolute inset-0 opacity-5">
         <div className="w-full h-full bg-gradient-to-br from-blue-500 via-purple-500 to-pink-500"></div>
       </div>
 
-      {/* Exit Button - Responsive positioning */}
+      {/* Exit Button */}
       <button
         onClick={onExit}
-        className="absolute top-4 right-4 sm:top-6 sm:right-6 p-2 sm:p-3 bg-gray-800 hover:bg-gray-700 text-white rounded-full transition-colors z-10"
+        className="absolute top-3 right-3 sm:top-4 sm:right-4 md:top-6 md:right-6 p-2 sm:p-2.5 md:p-3 bg-gray-800 hover:bg-gray-700 text-white rounded-full transition-all duration-200 z-10 hover:scale-105 active:scale-95 shadow-lg"
+        aria-label="Exit focus mode"
       >
-        <X className="w-5 h-5 sm:w-6 sm:h-6" />
+        <X className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6" />
       </button>
 
-      {/* Main Content */}
-      <div className="w-full max-w-lg mx-auto px-4 sm:px-6 py-8 sm:py-0">
-        <div className="text-center space-y-6 sm:space-y-8">
-          {/* Session Info with enhanced time display */}
-          <div className="space-y-2">
-            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white">
-              {sessionType === "focus" ? "🎯 Focus Time" : "☕ Break Time"}
-            </h1>
-            <p className="text-sm sm:text-base text-gray-300 px-2">
-              {sessionType === "focus"
-                ? "Time to concentrate and be productive"
-                : sessionCount % 4 === 0
-                ? "Take a long break - you've earned it!"
-                : "Short break - stretch and relax"}
-            </p>
-            <div className="text-xs sm:text-sm text-gray-400">
-              Sessions completed: {sessionCount}
-            </div>
-            {sessionType === "focus" && (
-              <div className="text-xs text-blue-400">
-                Session length:{" "}
-                {customTime < 1
-                  ? `${Math.round(customTime * 60)} seconds`
-                  : `${customTime} minutes`}
+      {/* Main Content Container */}
+      <div className="w-full h-full flex items-center justify-center p-4 sm:p-6 md:p-8">
+        <div className="w-full max-w-xs sm:max-w-sm md:max-w-lg lg:max-w-2xl xl:max-w-4xl mx-auto">
+          <div className="text-center space-y-4 sm:space-y-6 md:space-y-8 lg:space-y-10">
+            {/* Session Info */}
+            <div className="space-y-1 sm:space-y-2 md:space-y-3">
+              <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-bold text-white">
+                {sessionType === "focus" ? "🎯 Focus Time" : "☕ Break Time"}
+              </h1>
+              <p className="text-xs sm:text-sm md:text-base lg:text-lg text-gray-300 px-2 sm:px-4">
+                {sessionType === "focus"
+                  ? "Time to concentrate and be productive"
+                  : sessionCount % 4 === 0
+                  ? "Take a long break - you've earned it!"
+                  : "Short break - stretch and relax"}
+              </p>
+              <div className="text-xs sm:text-sm md:text-base text-gray-400">
+                Sessions completed: {sessionCount}
               </div>
-            )}
-          </div>
+              {sessionType === "focus" && (
+                <div className="text-xs sm:text-sm md:text-base text-blue-400">
+                  Session length:{" "}
+                  {customTime < 1
+                    ? `${Math.round(customTime * 60)} seconds`
+                    : `${customTime} minutes`}
+                </div>
+              )}
+              {audioError && (
+                <div className="text-xs sm:text-sm text-yellow-400 bg-yellow-900/20 px-3 py-2 rounded-lg max-w-xs sm:max-w-sm mx-auto">
+                  ⚠️ Audio unavailable - check browser title for alerts
+                </div>
+              )}
+            </div>
 
-          {/* Timer Display - Responsive sizing */}
-          <div className="relative flex justify-center">
-            {/* Progress Ring */}
-            <div className="relative w-48 h-48 sm:w-64 sm:h-64 lg:w-72 lg:h-72">
-              <svg
-                className="w-full h-full transform -rotate-90"
-                viewBox="0 0 100 100"
-              >
-                <circle
-                  cx="50"
-                  cy="50"
-                  r="45"
-                  stroke="currentColor"
-                  strokeWidth="4"
-                  fill="transparent"
-                  className="text-gray-700"
-                />
-                <circle
-                  cx="50"
-                  cy="50"
-                  r="45"
-                  stroke="currentColor"
-                  strokeWidth="4"
-                  fill="transparent"
-                  strokeLinecap="round"
-                  className={
-                    sessionType === "focus" ? "text-blue-500" : "text-green-500"
-                  }
-                  style={{
-                    strokeDasharray: `${2 * Math.PI * 45}`,
-                    strokeDashoffset: `${
-                      2 * Math.PI * 45 * (1 - getProgressPercentage() / 100)
-                    }`,
-                  }}
-                />
-              </svg>
-              <div className="absolute inset-0 flex items-center justify-center">
-                <div className="text-center">
-                  <div className="text-3xl sm:text-4xl lg:text-5xl font-mono font-bold text-white">
-                    {formatTime(timeRemaining)}
+            {/* Timer Display */}
+            <div className="flex justify-center py-2 sm:py-4 md:py-6">
+              <div className="relative w-40 h-40 sm:w-48 sm:h-48 md:w-64 md:h-64 lg:w-80 lg:h-80 xl:w-96 xl:h-96">
+                <svg
+                  className="w-full h-full transform -rotate-90"
+                  viewBox="0 0 100 100"
+                >
+                  <circle
+                    cx="50"
+                    cy="50"
+                    r="45"
+                    stroke="currentColor"
+                    strokeWidth="3"
+                    fill="transparent"
+                    className="text-gray-700"
+                  />
+                  <circle
+                    cx="50"
+                    cy="50"
+                    r="45"
+                    stroke="currentColor"
+                    strokeWidth="3"
+                    fill="transparent"
+                    strokeLinecap="round"
+                    className={
+                      sessionType === "focus"
+                        ? "text-blue-500"
+                        : "text-green-500"
+                    }
+                    style={{
+                      strokeDasharray: `${2 * Math.PI * 45}`,
+                      strokeDashoffset: `${
+                        2 * Math.PI * 45 * (1 - getProgressPercentage() / 100)
+                      }`,
+                      transition: "stroke-dashoffset 0.5s ease-in-out",
+                    }}
+                  />
+                </svg>
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <div className="text-center">
+                    <div className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-mono font-bold text-white">
+                      {formatTime(timeRemaining)}
+                    </div>
+                    {timeRemaining <= 10 && timeRemaining > 0 && isRunning && (
+                      <div className="text-xs sm:text-sm md:text-base text-red-400 animate-pulse mt-1 sm:mt-2">
+                        Almost done!
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
             </div>
-          </div>
 
-          {/* Controls - Responsive button sizes */}
-          <div className="space-y-4 sm:space-y-6">
-            <div className="flex justify-center gap-4 sm:gap-6">
-              <button
-                onClick={toggleTimer}
-                className={`p-3 sm:p-4 rounded-full transition-all duration-200 transform hover:scale-105 active:scale-95 ${
-                  isRunning
-                    ? "bg-red-600 hover:bg-red-700 shadow-red-500/25"
-                    : "bg-green-600 hover:bg-green-700 shadow-green-500/25"
-                } text-white shadow-lg`}
-              >
-                {isRunning ? (
-                  <Pause className="w-5 h-5 sm:w-6 sm:h-6" />
-                ) : (
-                  <Play className="w-5 h-5 sm:w-6 sm:h-6 ml-0.5" />
-                )}
-              </button>
-              <button
-                onClick={resetTimer}
-                className="p-3 sm:p-4 bg-gray-700 hover:bg-gray-600 text-white rounded-full transition-all duration-200 transform hover:scale-105 active:scale-95 shadow-lg shadow-gray-500/25"
-              >
-                <RotateCcw className="w-5 h-5 sm:w-6 sm:h-6" />
-              </button>
-            </div>
+            {/* Controls */}
+            <div className="space-y-3 sm:space-y-4 md:space-y-6">
+              <div className="flex justify-center gap-3 sm:gap-4 md:gap-6">
+                <button
+                  onClick={toggleTimer}
+                  className={`p-3 sm:p-4 md:p-5 rounded-full transition-all duration-200 transform hover:scale-105 active:scale-95 ${
+                    isRunning
+                      ? "bg-red-600 hover:bg-red-700 shadow-red-500/25"
+                      : "bg-green-600 hover:bg-green-700 shadow-green-500/25"
+                  } text-white shadow-lg`}
+                  aria-label={isRunning ? "Pause timer" : "Start timer"}
+                >
+                  {isRunning ? (
+                    <Pause className="w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7" />
+                  ) : (
+                    <Play className="w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7 ml-0.5" />
+                  )}
+                </button>
+                <button
+                  onClick={resetTimer}
+                  className="p-3 sm:p-4 md:p-5 bg-gray-700 hover:bg-gray-600 text-white rounded-full transition-all duration-200 transform hover:scale-105 active:scale-95 shadow-lg shadow-gray-500/25"
+                  aria-label="Reset timer"
+                >
+                  <RotateCcw className="w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7" />
+                </button>
+              </div>
 
-            {/* Timer Status Indicator */}
-            <div className="text-center">
-              <div
-                className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${
-                  isRunning
-                    ? "bg-green-500/20 text-green-300 border border-green-500/30"
-                    : "bg-gray-500/20 text-gray-300 border border-gray-500/30"
-                }`}
-              >
+              {/* Timer Status Indicator */}
+              <div className="text-center">
                 <div
-                  className={`w-2 h-2 rounded-full mr-2 ${
-                    isRunning ? "bg-green-400 animate-pulse" : "bg-gray-400"
+                  className={`inline-flex items-center px-3 py-1.5 sm:px-4 sm:py-2 rounded-full text-xs sm:text-sm font-medium ${
+                    isRunning
+                      ? "bg-green-500/20 text-green-300 border border-green-500/30"
+                      : "bg-gray-500/20 text-gray-300 border border-gray-500/30"
                   }`}
-                ></div>
-                {isRunning ? "Timer Running" : "Timer Paused"}
+                >
+                  <div
+                    className={`w-2 h-2 rounded-full mr-2 ${
+                      isRunning ? "bg-green-400 animate-pulse" : "bg-gray-400"
+                    }`}
+                  ></div>
+                  {isRunning ? "Timer Running" : "Timer Paused"}
+                </div>
               </div>
+
+              {/* Custom Time Settings */}
+              {sessionType === "focus" && !isRunning && (
+                <div className="space-y-3 sm:space-y-4">
+                  <p className="text-gray-300 text-xs sm:text-sm md:text-base font-medium">
+                    Focus duration:
+                  </p>
+                  <div className="flex flex-wrap justify-center gap-2 sm:gap-3 max-w-lg mx-auto">
+                    {[10 / 60, 15, 25, 45, 60].map((minutes) => (
+                      <button
+                        key={minutes}
+                        onClick={() => handleCustomTimeChange(minutes)}
+                        className={`px-3 py-1.5 sm:px-4 sm:py-2 md:px-5 md:py-2.5 rounded-lg text-xs sm:text-sm md:text-base font-medium transition-all duration-200 transform hover:scale-105 active:scale-95 min-w-[50px] sm:min-w-[60px] md:min-w-[70px] ${
+                          Math.abs(customTime - minutes) < 0.01
+                            ? "bg-blue-600 hover:bg-blue-700 text-white shadow-lg shadow-blue-500/25 ring-2 ring-blue-400/50"
+                            : "bg-gray-700 hover:bg-gray-600 text-gray-300 shadow-md hover:shadow-lg"
+                        }`}
+                      >
+                        {minutes < 1
+                          ? `${Math.round(minutes * 60)}s`
+                          : `${minutes}m`}
+                      </button>
+                    ))}
+                  </div>
+                  <p className="text-xs sm:text-sm text-gray-500 mt-2">
+                    Current:{" "}
+                    {customTime < 1
+                      ? `${Math.round(customTime * 60)} seconds`
+                      : `${customTime} minutes`}{" "}
+                    ({formatTime(customTime * 60)})
+                  </p>
+                </div>
+              )}
             </div>
 
-            {/* Custom Time Settings - Enhanced with better feedback */}
-            {sessionType === "focus" && !isRunning && (
-              <div className="space-y-3">
-                <p className="text-gray-300 text-xs sm:text-sm font-medium">
-                  Focus duration:
-                </p>
-                <div className="flex flex-wrap justify-center gap-2 sm:gap-3">
-                  {[10 / 60, 15, 25, 45, 60].map((minutes) => (
-                    <button
-                      key={minutes}
-                      onClick={() => handleCustomTimeChange(minutes)}
-                      className={`px-3 py-2 sm:px-4 sm:py-2 rounded-lg text-xs sm:text-sm font-medium transition-all duration-200 transform hover:scale-105 active:scale-95 min-w-[60px] ${
-                        customTime === minutes
-                          ? "bg-blue-600 hover:bg-blue-700 text-white shadow-lg shadow-blue-500/25 ring-2 ring-blue-400/50"
-                          : "bg-gray-700 hover:bg-gray-600 text-gray-300 shadow-md hover:shadow-lg"
-                      }`}
-                    >
-                      {minutes < 1
-                        ? `${Math.round(minutes * 60)}s`
-                        : `${minutes}m`}
-                    </button>
-                  ))}
-                </div>
-                <p className="text-xs text-gray-500 mt-2">
-                  Current:{" "}
-                  {customTime < 1
-                    ? `${Math.round(customTime * 60)} seconds`
-                    : `${customTime} minutes`}{" "}
-                  ({formatTime(customTime * 60)})
-                </p>
-              </div>
-            )}
-          </div>
-
-          {/* Instructions - Responsive text and spacing */}
-          <div className="text-xs sm:text-sm text-gray-400 space-y-2 max-w-sm mx-auto px-2">
-            <p>
-              <strong>Focus Sessions:</strong> Work with full concentration,
-              avoid distractions.
-            </p>
-            <p>
-              <strong>Break Time:</strong> Step away from work, stretch,
-              hydrate, or rest your eyes.
-            </p>
-            <p className="text-xs opacity-75">
-              Based on the Pomodoro Technique: 25min focus → 5min break → repeat
-            </p>
-            <p className="text-xs opacity-75 text-blue-300">
-              🔊 Audio alarm will play when timer ends
-            </p>
+            {/* Instructions */}
+            <div className="text-xs sm:text-sm md:text-base text-gray-400 space-y-2 sm:space-y-3 max-w-xs sm:max-w-sm md:max-w-lg lg:max-w-xl mx-auto px-2 sm:px-4">
+              <p>
+                <strong>Focus Sessions:</strong> Work with full concentration,
+                avoid distractions.
+              </p>
+              <p>
+                <strong>Break Time:</strong> Step away from work, stretch,
+                hydrate, or rest your eyes.
+              </p>
+              <p className="text-xs sm:text-sm opacity-75">
+                Based on the Pomodoro Technique: 25min focus → 5min break →
+                repeat
+              </p>
+              <p className="text-xs sm:text-sm opacity-75 text-blue-300">
+                🔊 Audio alarm will play when timer ends
+              </p>
+            </div>
           </div>
         </div>
       </div>
