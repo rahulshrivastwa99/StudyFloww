@@ -11,6 +11,7 @@ import {
 
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import { StudyDataProvider } from "./contexts/StudyDataContext";
+import { ThemeProvider, useTheme } from "./contexts/ThemeContext"; // Import ThemeProvider and useTheme
 
 // Components
 import AuthForm from "./components/AuthForm";
