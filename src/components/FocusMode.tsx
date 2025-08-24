@@ -1,8 +1,21 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { X, Clock, Play, Pause, RotateCcw } from "lucide-react";
 
 interface FocusModeProps {
   onExit: () => void;
+}
+
+// Type for AudioContext to handle browser compatibility
+type AudioContextType = {
+  new (contextOptions?: AudioContextOptions): AudioContext;
+  prototype: AudioContext;
+};
+
+declare global {
+  interface Window {
+    AudioContext: AudioContextType;
+    webkitAudioContext: AudioContextType;
+  }
 }
 
 const FocusMode: React.FC<FocusModeProps> = ({ onExit }) => {
@@ -11,22 +24,41 @@ const FocusMode: React.FC<FocusModeProps> = ({ onExit }) => {
   const [sessionType, setSessionType] = useState<"focus" | "break">("focus");
   const [sessionCount, setSessionCount] = useState(0);
   const [customTime, setCustomTime] = useState(25);
+  const [audioError, setAudioError] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
 
   const focusTime = 25 * 60; // 25 minutes
   const shortBreak = 5 * 60; // 5 minutes
   const longBreak = 15 * 60; // 15 minutes
 
+  const audioContextRef = useRef<AudioContext | null>(null);
+
+  // Check if device is mobile
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(/iPhone|iPad|iPod|Android/i.test(navigator.userAgent));
+    };
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
+
   // Request notification permission on component mount
   useEffect(() => {
     if ("Notification" in window && Notification.permission === "default") {
-      Notification.requestPermission();
+      Notification.requestPermission().catch(console.error);
     }
   }, []);
 
   // Debug logging to check if timer is working
   useEffect(() => {
-    console.log("Timer state:", { isRunning, timeRemaining, sessionType });
-  }, [isRunning, timeRemaining, sessionType]);
+    console.log("Timer state:", {
+      isRunning,
+      timeRemaining,
+      sessionType,
+      isMobile,
+    });
+  }, [isRunning, timeRemaining, sessionType, isMobile]);
 
   useEffect(() => {
     let interval: NodeJS.Timeout | null = null;
@@ -52,9 +84,20 @@ const FocusMode: React.FC<FocusModeProps> = ({ onExit }) => {
 
   const playAlarmSound = () => {
     try {
-      // Create audio context
-      const audioContext = new (window.AudioContext ||
-        (window as any).webkitAudioContext)();
+      // Clean up previous audio context if it exists
+      if (audioContextRef.current) {
+        audioContextRef.current.close().catch(console.error);
+        audioContextRef.current = null;
+      }
+
+      // Create audio context with proper error handling
+      const AudioContextClass =
+        window.AudioContext || (window as any).webkitAudioContext;
+      if (!AudioContextClass) {
+        throw new Error("AudioContext not supported");
+      }
+
+      audioContextRef.current = new AudioContextClass();
 
       // Create a more pleasant alarm sound (multiple tones)
       const playTone = (
@@ -63,11 +106,13 @@ const FocusMode: React.FC<FocusModeProps> = ({ onExit }) => {
         duration: number,
         volume: number = 0.3
       ) => {
-        const oscillator = audioContext.createOscillator();
-        const gainNode = audioContext.createGain();
+        if (!audioContextRef.current) return;
+
+        const oscillator = audioContextRef.current.createOscillator();
+        const gainNode = audioContextRef.current.createGain();
 
         oscillator.connect(gainNode);
-        gainNode.connect(audioContext.destination);
+        gainNode.connect(audioContextRef.current.destination);
 
         oscillator.frequency.setValueAtTime(frequency, startTime);
         oscillator.type = "sine";
@@ -81,7 +126,7 @@ const FocusMode: React.FC<FocusModeProps> = ({ onExit }) => {
       };
 
       // Play a pleasant chime sequence (C-E-G chord progression)
-      const now = audioContext.currentTime;
+      const now = audioContextRef.current.currentTime;
       playTone(523.25, now, 0.5, 0.2); // C5
       playTone(659.25, now + 0.1, 0.5, 0.15); // E5
       playTone(783.99, now + 0.2, 0.8, 0.1); // G5
@@ -90,56 +135,75 @@ const FocusMode: React.FC<FocusModeProps> = ({ onExit }) => {
       playTone(523.25, now + 0.8, 0.5, 0.2); // C5
       playTone(659.25, now + 0.9, 0.5, 0.15); // E5
       playTone(783.99, now + 1.0, 0.8, 0.1); // G5
+
+      setAudioError(false);
     } catch (error) {
-      console.log("Could not play alarm sound:", error);
+      console.error("Could not play alarm sound:", error);
+      setAudioError(true);
+
       // Fallback: try to use system beep
       try {
         // Create a simple beep sound
         const audio = new Audio(
           "data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmUeBzCH0/LNdiMFl1nAI/k7AjSBzfLZijYIF2m98OHqSDGGyfDzlTIIm1/ExO3jQkGJzO/GhzEICm6+7+OqVhYOYKzd7eKyVhEMbafs6qJUDg1fqt5qfXoHUKfg8PafUQwOPq0urkjA"
         );
+        audio.play().catch(console.error);
       } catch (e) {
-        console.log("Fallback audio also failed:", e);
+        console.error("Fallback audio also failed:", e);
       }
     }
   };
 
   const handleSessionComplete = () => {
+    console.log("Session complete - starting transition", {
+      sessionType,
+      sessionCount,
+    });
+
+    // First stop the timer
     setIsRunning(false);
 
     // Play alarm sound
     playAlarmSound();
 
-    // Show notification
+    // Show notification (with mobile-specific handling)
     if ("Notification" in window && Notification.permission === "granted") {
-      new Notification(
-        sessionType === "focus" ? "Break Time!" : "Focus Time!",
-        {
-          body:
-            sessionType === "focus"
-              ? "Great work! Time for a break."
-              : "Break is over. Ready to focus?",
-          icon: "/favicon.ico",
-        }
-      );
-    }
-
-    if (sessionType === "focus") {
-      const newCount = sessionCount + 1;
-      setSessionCount(newCount);
-
-      // After 4 focus sessions, take a long break
-      if (newCount % 4 === 0) {
-        setSessionType("break");
-        setTimeRemaining(longBreak);
-      } else {
-        setSessionType("break");
-        setTimeRemaining(shortBreak);
+      try {
+        new Notification(
+          sessionType === "focus" ? "Break Time!" : "Focus Time!",
+          {
+            body:
+              sessionType === "focus"
+                ? "Great work! Time for a break."
+                : "Break is over. Ready to focus?",
+            icon: "/favicon.ico",
+          }
+        );
+      } catch (error) {
+        console.error("Notification failed:", error);
       }
-    } else {
-      setSessionType("focus");
-      setTimeRemaining(customTime * 60);
     }
+
+    // Use setTimeout to ensure state updates happen in the correct order
+    // and to prevent potential race conditions
+    setTimeout(() => {
+      if (sessionType === "focus") {
+        const newCount = sessionCount + 1;
+        setSessionCount(newCount);
+
+        // After 4 focus sessions, take a long break
+        if (newCount % 4 === 0) {
+          setSessionType("break");
+          setTimeRemaining(longBreak);
+        } else {
+          setSessionType("break");
+          setTimeRemaining(shortBreak);
+        }
+      } else {
+        setSessionType("focus");
+        setTimeRemaining(customTime * 60);
+      }
+    }, 100); // Small delay to ensure proper state transitions
   };
 
   const toggleTimer = () => {
@@ -201,8 +265,17 @@ const FocusMode: React.FC<FocusModeProps> = ({ onExit }) => {
     }
   };
 
+  // Clean up audio context on component unmount
+  useEffect(() => {
+    return () => {
+      if (audioContextRef.current) {
+        audioContextRef.current.close().catch(console.error);
+      }
+    };
+  }, []);
+
   return (
-    <div className="fixed inset-0 bg-gray-900 z-50 flex items-center justify-center overflow-y-auto">
+    <div className="fixed inset-0 bg-gray-900 z-50 flex items-center justify-center overflow-y-auto p-4">
       {/* Background Pattern */}
       <div className="absolute inset-0 opacity-5">
         <div className="w-full h-full bg-gradient-to-br from-blue-500 via-purple-500 to-pink-500"></div>
