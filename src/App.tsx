@@ -1,5 +1,5 @@
 // src/App.tsx
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   BrowserRouter as Router,
   Routes,
@@ -73,19 +73,56 @@ const AppContent = () => {
   const location = useLocation();
   const activePanel = location.pathname.split("/")[1] || "dashboard";
 
+  // Initialize isOpen based on screen size
+  const [isOpen, setIsOpen] = useState(() => window.innerWidth >= 768);
+  const [isInspecting, setIsInspecting] = useState(false);
+  const setActivePanel = () => {}; // Placeholder function
+
+  // Handle screen size changes
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth >= 768) {
+        setIsOpen(true); // Always open on desktop
+      } else {
+        setIsOpen(false); // Closed by default on mobile
+      }
+    };
+
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  // Keyboard shortcut for inspection mode (Ctrl+Shift+I)
+  React.useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.ctrlKey && e.shiftKey && e.key === "I") {
+        e.preventDefault();
+        setIsInspecting((prev) => !prev);
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, []);
+
   return (
     <div className="flex h-screen">
       {user && (
         <Sidebar
           activePanel={activePanel}
-          setActivePanel={() => {}}
-          isOpen={true}
-          setIsOpen={() => {}}
+          setActivePanel={setActivePanel}
+          isOpen={isOpen}
+          setIsOpen={setIsOpen}
           focusMode={false}
+          // isInspecting={isInspecting}
         />
       )}
 
-      <main className="flex-1 overflow-y-auto p-4">
+      <main
+        className={`flex-1 overflow-y-auto p-4 transition-all duration-300 ${
+          user && window.innerWidth >= 768 ? "ml-64" : "ml-0"
+        }`}
+      >
         <Routes>
           <Route
             path="/auth"
@@ -108,7 +145,7 @@ const AppContent = () => {
             }
           />
           <Route
-            path="/todos"
+            path="/todo"
             element={
               <PrivateRoute>
                 <TodoList />
@@ -164,7 +201,7 @@ const AppContent = () => {
             }
           />
           <Route
-            path="/checkins"
+            path="/checkin"
             element={
               <PrivateRoute>
                 <CheckInList />

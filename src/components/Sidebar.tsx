@@ -29,6 +29,8 @@ const Sidebar: React.FC<SidebarProps> = ({
   setIsOpen,
   focusMode,
 }) => {
+  if (focusMode) return null;
+
   const menuItems = [
     { id: "dashboard", label: "Dashboard", icon: Home },
     { id: "streak", label: "Streak Tracker", icon: TrendingUp },
@@ -41,35 +43,61 @@ const Sidebar: React.FC<SidebarProps> = ({
     { id: "settings", label: "Settings", icon: Settings },
   ];
 
-  if (focusMode) return null;
+  // Check if we're on mobile
+  const [isMobile, setIsMobile] = React.useState(window.innerWidth < 768);
+
+  React.useEffect(() => {
+    const handleResize = () => {
+      const mobile = window.innerWidth < 768;
+      setIsMobile(mobile);
+      // On desktop, ensure sidebar is always considered "open"
+      if (!mobile) {
+        setIsOpen(true);
+      }
+    };
+
+    window.addEventListener("resize", handleResize);
+    // Set initial state
+    handleResize();
+
+    return () => window.removeEventListener("resize", handleResize);
+  }, [setIsOpen]);
+
+  // Fixed sidebar classes with better logic
+  const sidebarClasses = `
+    fixed left-0 top-0 h-full w-64 bg-white dark:bg-gray-800 shadow-lg z-40
+    transform transition-transform duration-300 ease-in-out
+    ${
+      isMobile
+        ? isOpen
+          ? "translate-x-0"
+          : "-translate-x-full"
+        : "translate-x-0"
+    }
+  `;
 
   return (
     <>
-      {/* Mobile menu button */}
-      <button
-        onClick={() => setIsOpen(!isOpen)}
-        className="fixed top-4 left-4 z-50 md:hidden bg-white dark:bg-gray-800 p-2 rounded-lg shadow-lg"
-      >
-        {isOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-      </button>
+      {/* Mobile menu button - only show on mobile */}
+      {isMobile && (
+        <button
+          onClick={() => setIsOpen(!isOpen)}
+          className="fixed top-4 left-4 z-50 bg-white dark:bg-gray-800 p-2 rounded-lg shadow-lg"
+        >
+          {isOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+        </button>
+      )}
 
-      {/* Overlay for mobile */}
-      {isOpen && (
+      {/* Overlay for mobile - only show on mobile when open */}
+      {isMobile && isOpen && (
         <div
-          className="fixed inset-0 bg-black bg-opacity-50 z-40 md:hidden"
+          className="fixed inset-0 bg-black bg-opacity-50 z-30"
           onClick={() => setIsOpen(false)}
         />
       )}
 
       {/* Sidebar */}
-      <aside
-        className={`
-        fixed left-0 top-0 h-full w-64 bg-white dark:bg-gray-800 shadow-lg z-40
-        transform transition-transform duration-300 ease-in-out
-        ${isOpen ? "translate-x-0" : "-translate-x-full"}
-        md:translate-x-0
-      `}
-      >
+      <aside className={sidebarClasses}>
         <div className="p-6">
           <div className="flex items-center space-x-2 mb-8">
             <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
@@ -88,16 +116,16 @@ const Sidebar: React.FC<SidebarProps> = ({
                   key={item.id}
                   to={`/${item.id === "dashboard" ? "" : item.id}`}
                   onClick={() => {
-                    if (window.innerWidth < 768) setIsOpen(false);
+                    setActivePanel(item.id);
+                    // Only close on mobile
+                    if (isMobile) setIsOpen(false);
                   }}
-                  className={`
-                    w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-all duration-200
+                  className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-all duration-200
                     ${
                       activePanel === item.id
                         ? "bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300 border-l-4 border-blue-500"
                         : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
-                    }
-                  `}
+                    }`}
                 >
                   <Icon className="w-5 h-5" />
                   <span className="font-medium">{item.label}</span>
@@ -105,15 +133,6 @@ const Sidebar: React.FC<SidebarProps> = ({
               );
             })}
           </nav>
-        </div>
-
-        <div className="absolute bottom-0 left-0 right-0 p-6">
-          <div className="bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg p-4 text-white">
-            <h3 className="font-semibold mb-1">Stay Focused!</h3>
-            <p className="text-sm opacity-90">
-              Your consistency builds success
-            </p>
-          </div>
         </div>
       </aside>
     </>
