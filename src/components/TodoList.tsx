@@ -114,10 +114,10 @@ const TodoList: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-10 m-auto h-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-10 ml-0 transition-all duration-300">
       <div className="max-w-4xl mx-auto space-y-8">
         {/* Header */}
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <div className="text-center space-y-3">
           <div>
             <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
               Todo List

@@ -1,27 +1,39 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { useStudyData } from '../contexts/StudyDataContext';
-import { Plus, Search, FileText, Edit3, Trash2, Save, X, Folder } from 'lucide-react';
+import React, { useState, useRef, useEffect } from "react";
+import { useStudyData } from "../contexts/StudyDataContext";
+import {
+  Plus,
+  Search,
+  FileText,
+  Edit3,
+  Trash2,
+  Save,
+  X,
+  Folder,
+} from "lucide-react";
 
 const NotesPanel: React.FC = () => {
   const { notes, addNote, updateNote, deleteNote } = useStudyData();
-  const [searchTerm, setSearchTerm] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('all');
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState("all");
   const [showEditor, setShowEditor] = useState(false);
   const [editingNote, setEditingNote] = useState<string | null>(null);
   const [editorData, setEditorData] = useState({
-    title: '',
-    content: '',
-    category: ''
+    title: "",
+    content: "",
+    category: "",
   });
 
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  const categories = Array.from(new Set(notes.map(note => note.category).filter(Boolean)));
+  const categories = Array.from(
+    new Set(notes.map((note) => note.category).filter(Boolean))
+  );
 
   useEffect(() => {
     if (textareaRef.current) {
-      textareaRef.current.style.height = 'auto';
-      textareaRef.current.style.height = textareaRef.current.scrollHeight + 'px';
+      textareaRef.current.style.height = "auto";
+      textareaRef.current.style.height =
+        textareaRef.current.scrollHeight + "px";
     }
   }, [editorData.content]);
 
@@ -34,7 +46,7 @@ const NotesPanel: React.FC = () => {
       addNote(editorData);
     }
 
-    setEditorData({ title: '', content: '', category: '' });
+    setEditorData({ title: "", content: "", category: "" });
     setShowEditor(false);
     setEditingNote(null);
   };
@@ -43,41 +55,46 @@ const NotesPanel: React.FC = () => {
     setEditorData({
       title: note.title,
       content: note.content,
-      category: note.category
+      category: note.category,
     });
     setEditingNote(note.id);
     setShowEditor(true);
   };
 
   const handleNewNote = () => {
-    setEditorData({ title: '', content: '', category: '' });
+    setEditorData({ title: "", content: "", category: "" });
     setEditingNote(null);
     setShowEditor(true);
   };
 
   const filteredNotes = notes
-    .filter(note => 
-      note.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      note.content.toLowerCase().includes(searchTerm.toLowerCase())
+    .filter(
+      (note) =>
+        note.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        note.content.toLowerCase().includes(searchTerm.toLowerCase())
     )
-    .filter(note => selectedCategory === 'all' || note.category === selectedCategory)
-    .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
+    .filter(
+      (note) => selectedCategory === "all" || note.category === selectedCategory
+    )
+    .sort(
+      (a, b) =>
+        new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
+    );
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-6">
       <div className="max-w-6xl mx-auto">
         <div className="flex flex-col lg:flex-row gap-8">
-          
           {/* Notes List */}
-          <div className={`${showEditor ? 'lg:w-1/2' : 'w-full'} space-y-6`}>
+          <div className={`${showEditor ? "lg:w-1/2" : "w-full"} space-y-6`}>
             {/* Header */}
-            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <div className=" ">
               <div>
-                <h1 className="text-3xl font-bold text-gray-900 dark:text-white flex items-center gap-3">
-                  <FileText className="w-8 h-8 text-blue-600" />
+                <h1 className="text-3xl font-bold text-gray-900 dark:text-white flex items-center gap-3 justify-center">
+                  <FileText className="w-10 h-10 text-blue-600 " />
                   Study Notes
                 </h1>
-                <p className="text-gray-600 dark:text-gray-400">
+                <p className="text-gray-600 dark:text-gray-400 text-center">
                   Organize and manage your study notes
                 </p>
               </div>
@@ -110,8 +127,10 @@ const NotesPanel: React.FC = () => {
                   className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
                 >
                   <option value="all">All Categories</option>
-                  {categories.map(category => (
-                    <option key={category} value={category}>{category}</option>
+                  {categories.map((category) => (
+                    <option key={category} value={category}>
+                      {category}
+                    </option>
                   ))}
                 </select>
               </div>
@@ -125,12 +144,14 @@ const NotesPanel: React.FC = () => {
                   No notes found
                 </h3>
                 <p className="text-gray-400 dark:text-gray-500">
-                  {searchTerm ? 'Try adjusting your search' : 'Create your first note to get started'}
+                  {searchTerm
+                    ? "Try adjusting your search"
+                    : "Create your first note to get started"}
                 </p>
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {filteredNotes.map(note => (
+                {filteredNotes.map((note) => (
                   <div
                     key={note.id}
                     className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-lg hover:shadow-xl transition-all duration-200 card-hover"
@@ -156,7 +177,7 @@ const NotesPanel: React.FC = () => {
                     </div>
 
                     <p className="text-gray-600 dark:text-gray-400 text-sm line-clamp-3 mb-4">
-                      {note.content || 'No content'}
+                      {note.content || "No content"}
                     </p>
 
                     <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
@@ -184,7 +205,7 @@ const NotesPanel: React.FC = () => {
               <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg h-full min-h-96">
                 <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
                   <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
-                    {editingNote ? 'Edit Note' : 'New Note'}
+                    {editingNote ? "Edit Note" : "New Note"}
                   </h3>
                   <div className="flex items-center gap-2">
                     <button
@@ -199,7 +220,7 @@ const NotesPanel: React.FC = () => {
                       onClick={() => {
                         setShowEditor(false);
                         setEditingNote(null);
-                        setEditorData({ title: '', content: '', category: '' });
+                        setEditorData({ title: "", content: "", category: "" });
                       }}
                       className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
                     >
@@ -214,7 +235,12 @@ const NotesPanel: React.FC = () => {
                       type="text"
                       placeholder="Note title..."
                       value={editorData.title}
-                      onChange={(e) => setEditorData(prev => ({ ...prev, title: e.target.value }))}
+                      onChange={(e) =>
+                        setEditorData((prev) => ({
+                          ...prev,
+                          title: e.target.value,
+                        }))
+                      }
                       className="w-full text-xl font-semibold bg-transparent border-none outline-none text-gray-900 dark:text-white placeholder-gray-400"
                     />
                   </div>
@@ -224,7 +250,12 @@ const NotesPanel: React.FC = () => {
                       type="text"
                       placeholder="Category (optional)"
                       value={editorData.category}
-                      onChange={(e) => setEditorData(prev => ({ ...prev, category: e.target.value }))}
+                      onChange={(e) =>
+                        setEditorData((prev) => ({
+                          ...prev,
+                          category: e.target.value,
+                        }))
+                      }
                       className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
                     />
                   </div>
@@ -234,7 +265,12 @@ const NotesPanel: React.FC = () => {
                       ref={textareaRef}
                       placeholder="Start writing your notes..."
                       value={editorData.content}
-                      onChange={(e) => setEditorData(prev => ({ ...prev, content: e.target.value }))}
+                      onChange={(e) =>
+                        setEditorData((prev) => ({
+                          ...prev,
+                          content: e.target.value,
+                        }))
+                      }
                       className="w-full min-h-96 bg-transparent border-none outline-none resize-none text-gray-700 dark:text-gray-300 placeholder-gray-400"
                     />
                   </div>
