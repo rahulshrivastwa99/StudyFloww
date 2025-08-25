@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useStudyData } from "../contexts/StudyDataContext";
 import { Plus, Play, ExternalLink, Trash2, Edit3, Search } from "lucide-react";
+import ProgressBar from "./ProgressBar";
 
 const YouTubeManager: React.FC = () => {
   const {
@@ -18,6 +19,9 @@ const YouTubeManager: React.FC = () => {
     url: "",
     description: "",
     category: "",
+    totalVideos: 0,
+    totalDuration: 0,
+    videoProgress: [],
   });
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -30,13 +34,28 @@ const YouTubeManager: React.FC = () => {
       return;
     }
 
+    const newPlaylistData = {
+      ...formData,
+      totalVideos: 0, // Set this to the estimated number of videos in the playlist
+      totalDuration: 0, // Set this to the estimated total duration in seconds
+      videoProgress: [],
+    };
+
     if (editingPlaylist) {
-      updateYouTubePlaylist(editingPlaylist, formData);
+      updateYouTubePlaylist(editingPlaylist, newPlaylistData);
     } else {
-      addYouTubePlaylist(formData);
+      addYouTubePlaylist(newPlaylistData);
     }
 
-    setFormData({ title: "", url: "", description: "", category: "" });
+    setFormData({
+      title: "",
+      url: "",
+      description: "",
+      category: "",
+      totalVideos: 0,
+      totalDuration: 0,
+      videoProgress: [],
+    });
     setShowForm(false);
     setEditingPlaylist(null);
   };
@@ -47,6 +66,9 @@ const YouTubeManager: React.FC = () => {
       url: playlist.url,
       description: playlist.description,
       category: playlist.category,
+      totalVideos: playlist.totalVideos || 0,
+      totalDuration: playlist.totalDuration || 0,
+      videoProgress: playlist.videoProgress || [],
     });
     setEditingPlaylist(playlist.id);
     setShowForm(true);
@@ -121,6 +143,9 @@ const YouTubeManager: React.FC = () => {
                 url: "",
                 description: "",
                 category: "",
+                totalVideos: 0,
+                totalDuration: 0,
+                videoProgress: [],
               });
             }}
             className="px-6 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors flex items-center gap-2"
@@ -307,7 +332,7 @@ const YouTubeManager: React.FC = () => {
                   </div>
                 </div>
 
-                {/* Playlist Info */}
+                {/* Playlist Info with ProgressBar */}
                 <div className="p-6">
                   <div className="flex items-start justify-between mb-3">
                     <h3 className="text-lg font-semibold text-gray-900 dark:text-white line-clamp-2">
@@ -334,6 +359,17 @@ const YouTubeManager: React.FC = () => {
                       {playlist.description}
                     </p>
                   )}
+
+                  {/* Progress Bar */}
+                  <ProgressBar
+                    progress={(playlist.videoProgress || []).reduce(
+                      (acc, video) => acc + video.watchedSeconds,
+                      0
+                    )}
+                    total={playlist.totalDuration || 0}
+                    className="mb-4"
+                    isTimeBased={true}
+                  />
 
                   <div className="flex items-center justify-between">
                     {playlist.category && (
