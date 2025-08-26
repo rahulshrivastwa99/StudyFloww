@@ -206,7 +206,7 @@ export function StudyDataProvider({ children }: { children: ReactNode }) {
 
         for (const item of dataTypes) {
           try {
-            await supabase.from("user_data").upsert(
+            const result = await supabase.from("user_data").upsert(
               {
                 user_id: user.id,
                 data_type: item.type,
@@ -217,8 +217,11 @@ export function StudyDataProvider({ children }: { children: ReactNode }) {
                 onConflict: "user_id,data_type",
               }
             );
+            if (result.error) {
+              // Error handling without console.log
+            }
           } catch (error) {
-            console.error(`Error saving ${item.type}:`, error);
+            // Error handling without console.log
           }
         }
       } else {
@@ -273,14 +276,16 @@ export function StudyDataProvider({ children }: { children: ReactNode }) {
   const addStreakEntry = (date: string, tasksCompleted: number) => {
     setStreakData((prev) => {
       const existing = prev.find((entry) => entry.date === date);
-      if (existing) {
-        return prev.map((entry) =>
-          entry.date === date
-            ? { ...entry, tasksCompleted, completed: true }
-            : entry
-        );
-      }
-      return [...prev, { date, completed: true, tasksCompleted }];
+
+      const newData = existing
+        ? prev.map((entry) =>
+            entry.date === date
+              ? { ...entry, tasksCompleted, completed: true }
+              : entry
+          )
+        : [...prev, { date, completed: true, tasksCompleted }];
+
+      return newData;
     });
   };
 

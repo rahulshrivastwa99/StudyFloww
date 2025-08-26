@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { useAuth } from "../contexts/AuthContext";
+import { useStudyData } from "../contexts/StudyDataContext";
 import { Eye, EyeOff, Mail, Lock, User, BookOpen } from "lucide-react";
 
 interface AuthFormProps {
@@ -9,6 +10,7 @@ interface AuthFormProps {
 
 const AuthForm: React.FC<AuthFormProps> = ({ mode, onToggleMode }) => {
   const { signIn, signUp, resetPassword } = useAuth();
+  const { addStreakEntry } = useStudyData();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -58,6 +60,8 @@ const AuthForm: React.FC<AuthFormProps> = ({ mode, onToggleMode }) => {
         const { error } = await signIn(email, password);
         if (error) {
           setError(error.message);
+        } else {
+          addStreakEntry(new Date().toISOString().split("T")[0], 1);
         }
       } else {
         const { error } = await signUp(email, password);

@@ -12,6 +12,7 @@ import {
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import { StudyDataProvider } from "./contexts/StudyDataContext";
 import { ThemeProvider, useTheme } from "./contexts/ThemeContext"; // Import ThemeProvider and useTheme
+import { useAutoStreak } from "./hooks/useAutoStreak"; // Import useAutoStreak
 
 // Components
 import AuthForm from "./components/AuthForm";
@@ -74,6 +75,9 @@ const AppContent = () => {
   const [isOpen, setIsOpen] = useState(() => window.innerWidth >= 768);
   const [isInspecting, setIsInspecting] = useState(false);
   const setActivePanel = () => {}; // Placeholder function
+
+  // Use auto streak hook to automatically mark streak on login
+  useAutoStreak();
 
   // Handle screen size changes
   useEffect(() => {
