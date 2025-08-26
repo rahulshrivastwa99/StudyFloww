@@ -163,7 +163,7 @@ const Sidebar: React.FC<SidebarProps> = ({
     setHoveredHoverZone(false);
     setHoveredSidebar(false);
     setOpenedByHover(false);
-    setIsOpen((prev) => !prev);
+    setIsOpen(!isOpen);
   };
 
   // When user clicks a nav item, we consider that a manual interaction; clear openedByHover so it doesn't auto-close afterwards.
@@ -250,7 +250,7 @@ const Sidebar: React.FC<SidebarProps> = ({
           transform: isOpen ? "translateX(0)" : "translateX(-100%)",
           transition: "transform 180ms ease-in-out",
         }}
-        className="bg-white dark:bg-gray-800 shadow-lg"
+        className="bg-white dark:bg-gray-800 shadow-lg flex flex-col"
         onMouseEnter={() => {
           setHoveredSidebar(true);
         }}
@@ -258,7 +258,7 @@ const Sidebar: React.FC<SidebarProps> = ({
           setHoveredSidebar(false);
         }}
       >
-        <div className="p-6">
+        <div className="p-6 flex flex-col h-full">
           <button
             onClick={() => {
               // Brand click: navigate/refresh behavior kept from previous version
@@ -297,7 +297,7 @@ const Sidebar: React.FC<SidebarProps> = ({
             </button>
           </div>
 
-          <nav className="space-y-2">
+          <nav className="space-y-2 flex-1 overflow-y-auto">
             {menuItems.map((item) => {
               const Icon = item.icon;
               return (
