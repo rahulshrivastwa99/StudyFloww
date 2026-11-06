@@ -163,9 +163,9 @@ const AuthForm: React.FC<AuthFormProps> = ({ mode, onToggleMode }) => {
             <button
               type="button"
               onClick={() => setShowForgotPassword(false)}
-              className="w-full text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 transition-colors"
+              className="w-full text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200"
             >
-              Back to Login
+              Login
             </button>
           </form>
         </div>
