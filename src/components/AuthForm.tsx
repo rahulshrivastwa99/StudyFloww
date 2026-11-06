@@ -69,7 +69,7 @@ const AuthForm: React.FC<AuthFormProps> = ({ mode, onToggleMode }) => {
           setError(error.message);
         } else {
           setMessage(
-            "Account created successfully! Please check your email to verify your account."
+            "Account created successfully! Please check your email to verify your account.",
           );
         }
       }
@@ -181,7 +181,7 @@ const AuthForm: React.FC<AuthFormProps> = ({ mode, onToggleMode }) => {
             <BookOpen className="w-8 h-8 text-white" />
           </div>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-            {mode === "login" ? "Welcome Back" : "Create Account"}
+            {mode === "login" ? "Welcome" : "Create Account"}
           </h1>
           <p className="text-gray-600 dark:text-gray-400 mt-2">
             {mode === "login"
@@ -275,8 +275,8 @@ const AuthForm: React.FC<AuthFormProps> = ({ mode, onToggleMode }) => {
                 ? "Signing In..."
                 : "Creating Account..."
               : mode === "login"
-              ? "Sign In"
-              : "Create Account"}
+                ? "Sign In"
+                : "Create Account"}
           </button>
 
           {mode === "login" && (
